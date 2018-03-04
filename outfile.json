@@ -1,0 +1,83 @@
+{ "features": [{
+"cluster": " 1 ", 
+ "vars" : [ 
+{ 
+ "label" : " % Environmental disease ", 
+ "value": 2.97 
+ },
+{ 
+ "label" : " Number of theft ", 
+ "value": 2.57 
+ },
+{ 
+ "label" : " Infant mortality rate ", 
+ "value": 2.33 
+ },
+{ 
+ "label" : " Air pollution index ", 
+ "value": 1.99 
+ }
+] 
+ } ,
+{
+"cluster": " 2 ", 
+ "vars" : [ 
+{ 
+ "label" : " Unemployment rate ", 
+ "value": 3.11 
+ },
+{ 
+ "label" : " Number of suicides ", 
+ "value": 2.7 
+ },
+{ 
+ "label" : " Number of road fatalities ", 
+ "value": 2.5 
+ },
+{ 
+ "label" : " Per capita income ", 
+ "value": 2.29 
+ },
+{ 
+ "label" : " Infant mortality rate ", 
+ "value": -2.09 
+ }
+] 
+ } ,
+{
+"cluster": " 3 ", 
+ "vars" : [ 
+{ 
+ "label" : " Cost of housing per year ", 
+ "value": 2.02 
+ },
+{ 
+ "label" : " % Environmental disease ", 
+ "value": -1.98 
+ },
+{ 
+ "label" : " Number of theft ", 
+ "value": -2.02 
+ },
+{ 
+ "label" : " % Low household income ", 
+ "value": -2.05 
+ }
+] 
+ } ,
+{
+"cluster": " 4 ", 
+ "vars" : [ 
+{ 
+ "label" : " % Low household income ", 
+ "value": 2.34 
+ },
+{ 
+ "label" : " Cost of housing per year ", 
+ "value": -2.54 
+ }
+] 
+ } 
+], "observations": [{"name":"New York","Dim_1":-2.1942,"Dim_2":2.296,"cluster":1},{"name":"Los Angeles","Dim_1":3.1648,"Dim_2":0.9603,"cluster":2},{"name":"Chicago","Dim_1":-1.8366,"Dim_2":1.7185,"cluster":1},{"name":"Philadelphie","Dim_1":-1.3002,"Dim_2":0.9331,"cluster":1},{"name":"Detroit","Dim_1":-0.173,"Dim_2":1.297,"cluster":1},{"name":"Boston","Dim_1":-2.439,"Dim_2":-1.9327,"cluster":3},{"name":"San Francisco","Dim_1":4.0129,"Dim_2":0.7484,"cluster":2},{"name":"Washington D. C.","Dim_1":-1.8475,"Dim_2":1.2239,"cluster":1},{"name":"Pittsburgh","Dim_1":0.4166,"Dim_2":-0.6265,"cluster":4},{"name":"St Louis","Dim_1":0.1358,"Dim_2":0.0243,"cluster":4},{"name":"Cleveland","Dim_1":-1.917,"Dim_2":-1.2012,"cluster":3},{"name":"Baltimore","Dim_1":-0.39,"Dim_2":1.6658,"cluster":1},{"name":"Houston","Dim_1":1.2336,"Dim_2":0.0336,"cluster":4},{"name":"Minneapolis","Dim_1":0.3523,"Dim_2":-2.2057,"cluster":3},{"name":"Dallas","Dim_1":1.3065,"Dim_2":-0.9313,"cluster":4},{"name":"Cincinnati","Dim_1":-0.424,"Dim_2":-1.5231,"cluster":4},{"name":"Milwaukee","Dim_1":-0.575,"Dim_2":-2.3562,"cluster":3},{"name":"Seattle","Dim_1":2.474,"Dim_2":-0.1242,"cluster":2}
+ ] 
+ }

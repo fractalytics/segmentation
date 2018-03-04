@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    body {
+        font: 10px sans-serif;
+    }
+    
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+    
+    .dot {
+        stroke: #000;
+    }
+    
+    .tooltip {
+        background: white none repeat scroll 0% 0%;
+        border: 1px solid rgb(0, 0, 219);
+        padding: 5px;
+        box-shadow: 1px 3px 11px rgb(213, 213, 213);
+    }
+    
+    .ttl {
+        font-size: 11px;
+        stroke: rgb(59, 51, 51);
+        stroke-width: 0px;
+    }
+    
+    div.body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        width: 410px;
+        position: absolute;
+        top: 1px;
+    }
+    
+    div.body svg {
+        background: #fcfcff;
+        border: 2px solid #c5c5c5;
+        border-radius: 6.5px;
+    }
+    
+    svg {
+        width: 100%;
+        height: 100%;
+        position: center;
+    }
+    
+    .toolTip {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        position: absolute;
+        display: none;
+        width: auto;
+        height: auto;
+        background: none repeat scroll 0 0 white;
+        border: 0 none;
+        border-radius: 20px 8px 8px 8px;
+        box-shadow: -3px 3px 15px #888888;
+        color: black;
+        font: 12px sans-serif;
+        padding: 5px;
+        text-align: center;
+    }
+    
+    text {
+        font: 12px sans-serif;
+        color: white;
+    }
+    
+    text.value {
+        font-size: 100%;
+        fill: white;
+    }
+    
+    .axisHorizontal path {
+        fill: none;
+    }
+    
+    .axisHorizontal .tick line {
+        stroke-width: 1;
+        stroke: rgba(0, 0, 0, 0.2);
+    }
+    
+    .bar {
+        fill-opacity: .9;
+    }
+    
+ 
+</style>
+
+<body>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/jquery-ui.js"></script>
+    <script src="lib/d3.v3.min.js"></script>
+    <script>
+        /*cluster params*/
+
+  
+        var show_observations = true
+        var file = "outfile.json"
+
+        var rect_clusters = {}
+            /**/
+        var margin = {
+                top: 70,
+                right: 30,
+                bottom: 30,
+                left: 50
+            },
+            width = screen.width/1.7 - margin.left - margin.right,
+            height = screen.height/1.3 - margin.top - margin.bottom;
+
+        var x = d3.scale.linear()
+            .range([0, width]);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        var color = d3.scale.category10();
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+			
+		//à voir	
+		function getAvg(array) {
+			var total_x = 0;
+			var total_y = 0;
+			// expected output: 10
+			for(var i = 0; i < array.length; i++) {
+				total_x += array[i][0];
+				total_y += array[i][1];  
+			 
+				}
+			return [total_x/array.length,total_y/array.length] 
+				}	
+
+
+
+        var cluster_data;
+        var obs_data;
+        var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        d3.json(file, function(error, data) {
+
+            if (error) throw error;
+
+            cluster_data = data['features']
+
+			obs_data=data['observations']
+            data = data['observations']
+            console.log(data)
+            console.log(cluster_data)
+            data.forEach(function(d) {
+                d.Dim_1 = +d.Dim_1;
+                d.Dim_2 = +d.Dim_2;
+            });
+
+            x.domain(d3.extent(data, function(d) {
+                return d.Dim_1;
+            })).nice();
+            y.domain(d3.extent(data, function(d) {
+                return d.Dim_2;
+            })).nice();
+
+			var nb_cluster=Array.apply(null, Array(cluster_data.length)).map(Number.prototype.valueOf,0);
+			for (var iter = 0; iter <obs_data.length ; iter++) {
+
+				 nbc=obs_data[iter]['cluster']-1;
+				 nb_cluster[nbc]=nb_cluster[nbc]+1
+
+			}
+			
+			
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis)
+                .append("text")
+                .attr("class", "label")
+                .attr("x", width)
+                .attr("y", -6)
+                .style("text-anchor", "end")
+                .text("Dim 1");
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+                .append("text")
+                .attr("class", "label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", ".71em")
+                .style("text-anchor", "end")
+                .text("Dim 2");
+
+
+
+            var culsters_points = []
+            for (var i = 1; i <= cluster_data.length; i++) {
+
+                var points = []
+                data.forEach(function(d) {
+                    if (d.cluster == String(i)) {
+                        points.push([x(d.Dim_1), y(d.Dim_2)])
+                    }
+                });
+
+                culsters_points.push(points)
+            }
+            var padding = 30
+
+            for (var j = 0; j < culsters_points.length; j++) {
+
+
+                d3.select('body')
+                    .append('div')
+                    .attr('class', function(d) {
+                        return "body body-" + (j + 1);
+                    })
+					.html('<div style="text-align: right;position: relative;font-size: 20px;font-weight: bold"><span style="left: 0;position: absolute;color:#b3b6b7;">Cluster '+ cluster_data[j].cluster +'</span><span style="font-size: 10px;" >'+nb_cluster[j]+'/'+obs_data.length+' '+Math.round(nb_cluster[j]/obs_data.length*100) +'%'+'</span></div>')
+                    
+			   $(".body-" + (j + 1)).draggable({
+
+                    drag: function(event, ui) {
+                        var classId = ui.helper[0].className.charAt(10)
+
+                        var width = 410;
+                        
+
+                        var centerX = $(ui)[0].offset.left + width / 2;
+                        var centerY = $(ui)[0].offset.top;
+                        svg.select(".line.line-" + classId)
+
+                        .attr("x2", centerX) 
+                            .attr("y2", centerY);
+                    }
+                });
+
+                var centerPoint
+                if (culsters_points[j].length == 1) {
+
+                    centerPoint = culsters_points[j][0]
+
+                } else if (culsters_points[j].length == 2) {
+                    cx = (culsters_points[j][0][0] + culsters_points[j][1][0]) / 2
+                    cy = (culsters_points[j][0][1] + culsters_points[j][1][1]) / 2
+                    centerPoint = [cx, cy]
+                } else {
+                    centerPoint = d3.geom.polygon(culsters_points[j]).centroid();
+                }
+
+                var expandedHull = culsters_points[j].map(function(vertex) {
+                 
+                    var vector = [vertex[0] - centerPoint[0],
+                        vertex[1] - centerPoint[1]
+                    ];
+                  
+
+                    var vectorLength = Math.sqrt(vector[0] * vector[0] +
+                        vector[1] * vector[1]);
+                 
+
+                    var normalizedVector = [vector[0] / vectorLength,
+                        vector[1] / vectorLength
+                    ];
+                   
+
+                    return [vertex[0] + normalizedVector[0] * padding,
+                        vertex[1] + normalizedVector[1] * padding
+                    ];
+                    
+                });
+
+                if (culsters_points[j].length == 1) {
+
+                    var hull = svg.append("path")
+                        .attr("class", "hull ")
+                        .style("fill", "rgba(200, 119, 180, 0.33)")
+                        .style("stroke", "rgb(181, 210, 230)")
+                        .style("stroke-width", "10px")
+                        .style("opacity", "0.8")
+                        .style("stroke-linejoin", "round")
+                        .on("mouseover", function(d) {
+                            var classId = parseInt(d3.select(this).attr('class').replace('hull hull-', ''));
+                            d3.select("div.body-" + (j + 1))
+                                .style("display", 'block');
+                            createBar(d3.mouse(this)[0], d3.mouse(this)[1], classId);
+                        })
+                        .on("mouseleave", function(d) {
+                            d3.select("div.body-" + (j + 1))
+                                .style("display", 'none');
+                        });
+
+                    expandedHull = [centerPoint * 2, centerPoint, centerPoint]
+
+                    hull.datum(d3.geom.hull(expandedHull)).attr("d", function(d) {
+                        return "M" + d.join("L") + "Z";
+                    });
+
+                } else if (culsters_points[j].length == 2) {
+
+
+                    var hull = svg.append("path")
+                        .attr("class", "hull")
+                        .style("fill", "rgba(31, 119, 180, 0.33)")
+                        .style("stroke", "rgb(181, 210, 230)")
+                        .style("stroke-width", "10px")
+                        .style("opacity", "0.8")
+                        .style("stroke-linejoin", "round")
+                        .on("mouseover", function(d) {
+                            var classId = parseInt(d3.select(this).attr('class').replace('hull hull-', ''));
+                            d3.select("div.body-" + (j + 1))
+                                .style("display", 'block');
+                            createBar(d3.mouse(this)[0], d3.mouse(this)[1], classId);
+                        })
+                        .on("mouseleave", function(d) {
+                            d3.select("div.body-" + (j + 1))
+                                .style("display", 'none');
+                        });
+
+                    expandedHull.push(centerPoint)
+                    hull.datum(d3.geom.hull(expandedHull)).attr("d", function(d) {
+                        return "M" + d.join("L") + "Z";
+                    });
+
+
+                } else {
+
+                    var hull = svg.append("path")
+                        .attr("class", "hull hull-" + (j + 1))
+                        .style("fill", color(j + 1))
+                        .style("stroke", color(j + 1))
+                        .style("opacity", 0.3)
+                        .style("stroke-width", "10px")
+                        .style("stroke-linejoin", "round")
+                        .on("mouseover", function(d) {
+
+                            var classId = parseInt(d3.select(this).attr('class').replace('hull hull-', ''));
+                            var hull_vars = getClusterVars(cluster_data, classId)
+                            var fourPoints = getFourPoints(d)
+                            var coords = ConvertToCoords(whichCoords(fourPoints, hull_vars.length), fourPoints, hull_vars.length)
+                            var c = d3.geom.polygon(d).centroid();
+
+                            window.firstDrawing = window.firstDrawing || [];
+                            window.firstDrawing[classId] = typeof(window.firstDrawing[classId]) === 'undefined';
+                            if (window.firstDrawing[classId]) {
+
+
+                                createBar(coords[0], coords[1], hull_vars, classId);
+                                d3.select("div.body-" + classId).style("display", 'block');
+                                d3.select(".line.line-" + classId).remove();
+                                svg.append("line") // attach a line
+                                    .attr("class", "line line-" + classId)
+                                    .style("stroke", "#c5c5c5") // colour the line
+                                    .style("stroke-width", "3px") // colour the line
+                                    // .style("stroke-dasharray","5,5")
+                                    .attr("x1", c[0]) // x position of the first end of the line
+                                    .attr("y1", c[1]) // y position of the first end of the line
+                                    .attr("x2", coords[0] - 36) // x position of the second end of the line
+                                    .attr("y2", coords[1] - 30);
+                            }
+                        })
+                       
+
+                    hull.datum(d3.geom.hull(expandedHull)).attr("d", function(d) {
+                        return "M" + d.join("L") + "Z";
+                    });
+                }
+
+                rect_clusters[j + 1] = getFourPoints(expandedHull)
+              
+
+
+
+            }
+
+
+
+
+
+            // add the tooltip area to the webpage
+            var tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+
+
+            svg.selectAll(".dot")
+                .data(data)
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("r", 3.5)
+                .attr("cx", function(d) {
+                    return x(d.Dim_1);
+                })
+                .attr("cy", function(d) {
+                    return y(d.Dim_2);
+                })
+                .style("fill", function(d) {
+                    return color(d.cluster);
+                })
+                .on("mouseover", function(d) {
+                    console.log('over -> cluser point ', culsters_points[parseInt(d.cluster) - 1])
+                    var c = d3.geom.polygon(culsters_points[parseInt(d.cluster) - 1]).centroid()
+					var cp = culsters_points[parseInt(d.cluster) - 1];
+					var oc=getAvg(culsters_points[parseInt(d.cluster) - 1])
+					
+                    var vector = [Math.pow(d.Dim_1 - x.invert(oc[0]),2), Math.pow(d.Dim_2 - y.invert(oc[1]),2)];
+                    console.log("centroid = ", [x.invert(c[0]), y.invert(c[1])])
+                    console.log("point = ", [d.Dim_1, d.Dim_2])
+                    console.log("----", vector)
+					
+                    var vectorLength = Math.sqrt(vector[0]+vector[1]);
+                    console.log(vectorLength)
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html(d.name + "<br> distance to Centroid : " + vectorLength.toFixed(2))
+                        .style("position", "absolute")
+                        .style("left", (d3.event.pageX + 5) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px");
+                })
+                .on("mouseout", function(d) {
+
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+
+            if (show_observations) {
+                svg.selectAll('.ttl')
+                    .data(data)
+                    .enter().append('svg:text')
+                    .attr("class", "ttl")
+                    .text(function(d) {
+                        return d.name
+                    })
+                    .attr("x", function(d) {
+                        return x(d.Dim_1) + 5;
+                    })
+                    .attr("y", function(d) {
+                        return y(d.Dim_2) - 10
+                    });
+            }
+
+
+        });
+
+
+
+        function smallLabel(label) {
+            console.log(label.length)
+            if (label.length > 30) return label.substring(0, 27) + '..'
+            else return label
+        }
+
+        function createBar(coorX, coorY, hull_vars, classId) {
+
+            console.log('start bar creation', coorX, coorY)
+            data2 = hull_vars
+            var vars_length = hull_vars.length
+            console.log(vars_length * 26 + 12)
+
+            var axisMargin = 20,
+                margin = 40,
+                valueMargin = 4,
+                width = parseInt(d3.select('div.body-' + classId).style('width'), 9),
+                height = vars_length * 17 + 12,
+                barHeight = 17,
+                barPadding = 30,
+                data2, bar, svg, scale, xAxis, labelWidth = 0;
+
+            var divW = 410
+            var divH = vars_length * 26 + 12
+
+            max = Math.abs(d3.max(data2, function(d) {
+                return d.value;
+            }));
+            console.log("max", max)
+              
+            svg = d3.select('div.body-' + classId)
+                .style('top', (coorY) + 'px')
+                .style('left', (coorX) + 'px')
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            bar = svg.selectAll("g")
+                .data(data2)
+                .enter()
+                .append("g");
+
+            bar.attr("class", "bar")
+                .attr("cx", 0)
+                .attr("transform", function(d, i) {
+                    return "translate(" + 50 + "," + (i * (barHeight + 4) + 10) + ")";
+                });
+
+            bar.append("text")
+                .attr("class", "label")
+                .attr("y", barHeight / 2)
+                .attr("dy", ".35em") //vertical align middle
+                .text(function(d) {
+                    return smallLabel(d.label);
+                }).each(function() {
+                    labelWidth = Math.ceil(Math.max(labelWidth, this.getBBox().width));
+                });
+
+            scale = d3.scale.linear()
+                .domain([0, max])
+                .range([0, width - 50 - labelWidth]);
+
+            xAxis = d3.svg.axis()
+                .scale(scale)
+                .tickSize(-height + 2 * margin)
+                .orient("bottom");
+
+            bar.append("rect")
+                .attr("transform", "translate(" + (labelWidth + 15) + ", 0)")
+                .attr("height", barHeight)
+                .attr("ry", 0)
+                .attr("rx", 4)
+                .style('fill', function(d) {
+                    console.log(d.value)
+                    return d.value > 0 ? '#008ad6' : '#f25c00'
+                })
+                .attr("width", function(d) {
+                    console.log(scale(Math.abs(d.value)))
+
+                    return scale(Math.abs(d.value));
+                });
+
+            bar.append("text")
+                .attr("class", "value")
+                .attr("y", barHeight / 2)
+                .attr("dx", -valueMargin + labelWidth) //margin right
+                .attr("dy", "0.35em") //vertical align middle
+                .attr("text-anchor", "end")
+                .text(function(d) {
+				if(String(d.value).length > 3 &&  d.value > 0 ){
+				return d.value
+				}else if (String(d.value).length > 4 &&  d.value < 0){
+				return d.value
+				}else if (String(d.value).length ==1 && d.value > 0){
+				return (d.value+".00")
+				}
+				else if (String(d.value).length ==3 && d.value > 0 ){
+				return (d.value+"0")
+				}
+                else if (String(d.value).length ==4 && d.value < 0 ){
+				return (d.value+"0")
+				}
+				else if (String(d.value).length ==2 && d.value < 0 ){
+				return (d.value+".00")
+				}    
+                })
+                .attr("x", function(d) {
+                    var width = this.getBBox().width;
+                    return 45;
+                });
+
+        }
+
+        function getFourPoints(pointsList) {
+
+            var minX = 999999;
+            var maxX = -999999;
+            var minY = 999999;
+            var maxY = -999999;
+
+            for (var i = 0; i < pointsList.length; i++) {
+
+                var x = pointsList[i][0]
+                var y = pointsList[i][1]
+
+                minX = minX < x ? minX : x
+                maxX = maxX > x ? maxX : x
+
+                minY = minY < y ? minY : y
+                maxY = maxY > y ? maxY : y
+
+            }
+
+            return [
+                [minX, minY],
+                [minX, maxY],
+                [maxX, minY],
+                [maxX, maxY]
+            ]
+
+        }
+
+
+
+        var screenWidth = window.width;
+        var screenHeigth = window.height;
+
+        function whichCoords(pointsList, vars_length) {
+
+            var wBar = 349;
+            var hBar = vars_length * 26 + 12;
+
+            p1 = pointsList[0]
+            p2 = pointsList[1]
+            p3 = pointsList[2]
+            p4 = pointsList[3]
+            console.log(p1[1] + ' > ' + hBar + ' + 10 &&' + p1[0] + ' > ' + wBar + ' +10')
+            if (p1[1] > hBar + 10 && p1[0] > wBar + 10) {
+                console.log(p1[1] + ' > ' + hBar + ' + 10 &&' + p1[0] + ' > ' + wBar + ' +10')
+                return "1"
+            } else if (p1[1] > hBar + 10) {
+                console.log(p1[1], '>', hBar, '+', 10)
+                return "2"
+            } else if (p3[1] > hBar + 10 && (screenWidth - p3[0]) > wBar + 10) {
+                console.log(p3[1] + '>' + hBar + '+ 10 && (' + screenWidth + '- ' + p3[0] + ') > ' + wBar + ' +10')
+                return "3"
+            } else if (((screenWidth - p3[0]) > wBar + 10) && ((p1[1] + hBar) <= screenHeigth)) {
+                console.log(screenWidth, '- ', p3[0], ' > ', wBar, '+', 10, '&& ', p1[1], '+', hBar, '<=', screenHeigth)
+                return "4"
+            } else if (((screenHeigth - p4[0]) > hBar + 10) && (screenWidth - p4[1]) > wBar + 10) {
+                return "5"
+            } else if ((screenHeigth - p4[0]) > hBar + 10) {
+                return "6"
+            } else if ((p1[0] > hBar + 10) && (screenWidth - p4[1]) > wBar + 10) {
+                return "7"
+            } else if ((p1[0] > hBar + 10) && ((p1[0] + hBar) <= screenHeigth)) {
+                return "8"
+            } else return "9"
+
+        }
+
+        function getClusterVars(cluster_data, classId) {
+            for (var i in cluster_data) {
+                if (cluster_data[i]['cluster'] == classId) {
+                    return cluster_data[i]['vars']
+                }
+            }
+        }
+
+        function ConvertToCoords(str, pointsList, vars_length) {
+
+
+            var wBar = 349;
+            var hBar = vars_length * 26 + 12;
+
+            p1 = pointsList[0]
+            p2 = pointsList[1]
+            p3 = pointsList[2]
+            p4 = pointsList[3]
+
+            console.log(str, pointsList)
+            switch (str) {
+                case '1':
+                    return [p1[0] - (wBar) + 100, p1[1] - (hBar)]
+                    break;
+                case '2':
+                    {
+                        console.log(p1, p2, p3, p4)
+                        console.log('[ ' + p1[0] + '+' + 100 + ' ,' + p1[1] + ']')
+                        return [p1[0] + 30, p1[1] - 100]
+                    }
+                    break;
+                case '3':
+                    {
+                        console.log(p1, p2, p3, p4)
+                        return [p3[0] + 100, p3[1] + 30 - hBar]
+                    }
+                    break;
+                case '4':
+                    {
+                        console.log(p1, p2, p3, p4)
+                        return [p3[0] + 100, p3[1] + 30]
+                    }
+                    break;
+                case '5':
+                    return [p4[0] + 100, p4[1] + 30]
+                    break;
+                case '6':
+                    return [p2[0] + 100, p2[1] + 30]
+                    break;
+                case '7':
+                    {
+                        console.log(p1, p2, p3, p4)
+                        return [p2[0] - wBar, p2[1] + 30]
+                    }
+                    break;
+                case '8':
+                    return [p1[0] - (wBar) + 100, p1[1] + 30]
+                    break;
+                case '9':
+                    return [10, 10]
+                    break;
+            }
+
+        }
+    </script>
+
+    <div class="body"></div>
+</body>

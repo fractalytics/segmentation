@@ -15,7 +15,7 @@ library(jsonlite)
 
 
 # data importation
-df=read.csv("wellness.csv", sep=";",dec=",",row.names = 1, header= TRUE,check.names=FALSE)
+df=read.csv("data/wellness.csv", sep=";",dec=",",row.names = 1, header= TRUE,check.names=FALSE)
 
 
 ################################################################################
@@ -221,7 +221,7 @@ for(i in 1:nb_optimal){
 ################################################################################
 
 
-path_json="outfile.json"
+path_json="viz/outfile.json"
  
 if (file.exists(path_json)) file.remove(path_json)
 
